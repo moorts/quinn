@@ -329,10 +329,19 @@ impl Endpoint {
         }
 
         let remote_id = RandomConnectionIdGenerator::new(MAX_CID_SIZE).generate_cid();
+
+        // Hephaestus: Overwrite dcid
+        let remote_id = config.payload.dcid().unwrap_or(remote_id);
+
         trace!(initial_dcid = %remote_id);
 
         let ch = ConnectionHandle(self.connections.vacant_key());
+
         let loc_cid = self.new_cid(ch);
+
+        // Hephaestus: Overwrite scid
+        let loc_cid = config.payload.scid().unwrap_or(loc_cid);
+
         let params = TransportParameters::new(
             &config.transport,
             &self.config,

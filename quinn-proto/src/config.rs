@@ -10,6 +10,7 @@ use crate::{
     congestion,
     crypto::{self, HandshakeTokenKey, HmacKey},
     VarInt, VarIntBoundsExceeded, DEFAULT_SUPPORTED_VERSIONS, INITIAL_MTU, MAX_UDP_PAYLOAD,
+    shared::ConnectionId,
 };
 
 /// Parameters governing the core QUIC state machine
@@ -866,6 +867,42 @@ impl fmt::Debug for ServerConfig {
     }
 }
 
+
+/// Hephaestus: Supplies QUICforge payload fields.
+#[derive(Clone, Debug, Default)]
+pub struct PayloadConfig {
+    scid: Option<ConnectionId>,
+    dcid: Option<ConnectionId>,
+}
+
+/// Hephaestus: Fluent interface for creating PayloadConfig.
+impl PayloadConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_scid(mut self, scid: ConnectionId) -> Self {
+        self.scid = Some(scid);
+        self
+    }
+
+    pub fn with_dcid(mut self, dcid: ConnectionId) -> Self {
+        self.dcid = Some(dcid);
+        self
+    }
+}
+
+/// Hephaestus: Accessors
+impl PayloadConfig {
+    pub fn scid(&self) -> Option<ConnectionId> {
+        self.scid
+    }
+
+    pub fn dcid(&self) -> Option<ConnectionId> {
+        self.dcid
+    }
+}
+
 /// Configuration for outgoing connections
 ///
 /// Default values should be suitable for most internet applications.
@@ -880,6 +917,9 @@ pub struct ClientConfig {
 
     /// QUIC protocol version to use
     pub(crate) version: u32,
+
+    /// Hephaestus: Config for overwriting payload fields
+    pub(crate) payload: PayloadConfig,
 }
 
 impl ClientConfig {
@@ -889,6 +929,7 @@ impl ClientConfig {
             transport: Default::default(),
             crypto,
             version: 1,
+            payload: PayloadConfig::default(),
         }
     }
 
@@ -901,6 +942,12 @@ impl ClientConfig {
     /// Set the QUIC version to use
     pub fn version(&mut self, version: u32) -> &mut Self {
         self.version = version;
+        self
+    }
+
+    /// Hephaestus: Set a payload config
+    pub fn payload_config(&mut self, payload: PayloadConfig) -> &mut Self {
+        self.payload = payload;
         self
     }
 }
