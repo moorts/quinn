@@ -62,7 +62,7 @@ mod work_limiter;
 
 use bytes::Bytes;
 pub use proto::{
-    congestion, crypto, AckFrequencyConfig, ApplicationClose, Chunk, ClientConfig, ConfigError,
+    congestion, crypto, AckFrequencyConfig, ApplicationClose, Chunk, ClientConfig, PayloadConfig, ConfigError,
     ConnectError, ConnectionClose, ConnectionError, EndpointConfig, IdleTimeout,
     MtuDiscoveryConfig, ServerConfig, StreamId, Transmit, TransportConfig, VarInt,
 };

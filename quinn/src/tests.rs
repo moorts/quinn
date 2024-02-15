@@ -19,7 +19,9 @@ use tracing::{error_span, info};
 use tracing_futures::Instrument as _;
 use tracing_subscriber::EnvFilter;
 
-use super::{ClientConfig, Endpoint, RecvStream, SendStream, TransportConfig};
+use super::{ClientConfig, PayloadConfig, Endpoint, RecvStream, SendStream, TransportConfig};
+
+use proto::{ConnectionId};
 
 #[test]
 fn handshake_timeout() {
@@ -227,6 +229,11 @@ fn endpoint() -> Endpoint {
     endpoint_with_config(TransportConfig::default())
 }
 
+/// Hepheastus: Create endpoint with payload config
+fn hepheastus_endpoint(payload: PayloadConfig) -> Endpoint {
+    endpoint_with_config_and_payload(TransportConfig::default(), payload)
+}
+
 fn endpoint_with_config(transport_config: TransportConfig) -> Endpoint {
     let cert = rcgen::generate_simple_self_signed(vec!["localhost".into()]).unwrap();
     let key = rustls::PrivateKey(cert.serialize_private_key_der());
@@ -244,6 +251,38 @@ fn endpoint_with_config(transport_config: TransportConfig) -> Endpoint {
     .unwrap();
     let mut client_config = ClientConfig::with_root_certificates(roots);
     client_config.transport_config(transport_config);
+    endpoint.set_default_client_config(client_config);
+
+    endpoint
+}
+
+fn endpoint_with_config_and_payload(transport_config: TransportConfig, payload: PayloadConfig) -> Endpoint {
+    let cert = rcgen::generate_simple_self_signed(vec!["localhost".into()]).unwrap();
+    let key = rustls::PrivateKey(cert.serialize_private_key_der());
+    let cert = rustls::Certificate(cert.serialize_der().unwrap());
+    let transport_config = Arc::new(transport_config);
+    let mut server_config = crate::ServerConfig::with_single_cert(vec![cert.clone()], key).unwrap();
+    server_config.transport_config(transport_config.clone());
+
+    let mut roots = rustls::RootCertStore::empty();
+    roots.add(&cert).unwrap();
+
+    let mut client_crypto = rustls::ClientConfig::builder()
+        .with_safe_defaults()
+        .with_root_certificates(roots)
+        .with_no_client_auth();
+
+    // Write secret keys to log file specified by SSLKEYLOGFILE
+    client_crypto.key_log = Arc::new(rustls::KeyLogFile::new());
+
+    let mut endpoint = Endpoint::server(
+        server_config,
+        SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 0),
+    )
+    .unwrap();
+    let mut client_config = ClientConfig::new(Arc::new(client_crypto));
+    client_config.transport_config(transport_config);
+    client_config.payload_config(payload);
     endpoint.set_default_client_config(client_config);
 
     endpoint
@@ -709,6 +748,30 @@ async fn stream_id_flow_control() {
             server.accept_uni().await.unwrap();
             server.accept_uni().await.unwrap();
         }
+    );
+}
+
+#[tokio::test]
+async fn hepheastus_test_payload() {
+    let _guard = subscribe();
+
+    let cfg = TransportConfig::default();
+
+    // Create payload config
+    let dcid_raw = [0u8; 8];
+    let dcid = ConnectionId::new(&dcid_raw);
+    let scid_raw = [1u8; 8];
+    let scid = ConnectionId::new(&scid_raw);
+    let payload_config = PayloadConfig::new().with_dcid(dcid).with_scid(scid);
+
+    let endpoint = endpoint_with_config_and_payload(cfg, payload_config);
+
+    // Perform QUIC handshake
+    let (client, server) = tokio::join!(
+        endpoint
+            .connect(endpoint.local_addr().unwrap(), "localhost")
+            .unwrap(),
+        async { endpoint.accept().await.unwrap().await }
     );
 }
 

@@ -1,0 +1,2 @@
+[env]
+SSLKEYLOGFILE = "/home/moorts/repos/fopra/my-quinn/logs.log"
