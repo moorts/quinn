@@ -31,7 +31,8 @@ mod cid_queue;
 #[doc(hidden)]
 pub mod coding;
 mod constant_time;
-mod packet;
+#[doc(hidden)]
+pub mod packet;
 mod range_set;
 #[cfg(all(test, feature = "rustls"))]
 mod tests;
