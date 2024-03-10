@@ -56,26 +56,26 @@ impl PartialDecode {
     }
 
     /// The underlying partially-decoded packet data
-    pub(crate) fn data(&self) -> &[u8] {
+    pub fn data(&self) -> &[u8] {
         self.buf.get_ref()
     }
 
-    pub(crate) fn initial_version(&self) -> Option<u32> {
+    pub fn initial_version(&self) -> Option<u32> {
         match self.plain_header {
             PlainHeader::Initial { version, .. } => Some(version),
             _ => None,
         }
     }
 
-    pub(crate) fn has_long_header(&self) -> bool {
+    pub fn has_long_header(&self) -> bool {
         !matches!(self.plain_header, PlainHeader::Short { .. })
     }
 
-    pub(crate) fn is_initial(&self) -> bool {
+    pub fn is_initial(&self) -> bool {
         self.space() == Some(SpaceId::Initial)
     }
 
-    pub(crate) fn space(&self) -> Option<SpaceId> {
+    pub fn space(&self) -> Option<SpaceId> {
         use self::PlainHeader::*;
         match self.plain_header {
             Initial { .. } => Some(SpaceId::Initial),
@@ -92,14 +92,14 @@ impl PartialDecode {
         }
     }
 
-    pub(crate) fn is_0rtt(&self) -> bool {
+    pub fn is_0rtt(&self) -> bool {
         match self.plain_header {
             PlainHeader::Long { ty, .. } => ty == LongType::ZeroRtt,
             _ => false,
         }
     }
 
-    pub(crate) fn dst_cid(&self) -> &ConnectionId {
+    pub fn dst_cid(&self) -> &ConnectionId {
         self.plain_header.dst_cid()
     }
 
@@ -109,7 +109,7 @@ impl PartialDecode {
         self.buf.get_ref().len()
     }
 
-    pub(crate) fn finish(
+    pub fn finish(
         self,
         header_crypto: Option<&dyn crypto::HeaderKey>,
     ) -> Result<Packet, PacketDecodeError> {
@@ -219,14 +219,14 @@ impl PartialDecode {
     }
 }
 
-pub(crate) struct Packet {
-    pub(crate) header: Header,
-    pub(crate) header_data: Bytes,
-    pub(crate) payload: BytesMut,
+pub struct Packet {
+    pub header: Header,
+    pub header_data: Bytes,
+    pub payload: BytesMut,
 }
 
 impl Packet {
-    pub(crate) fn reserved_bits_valid(&self) -> bool {
+    pub fn reserved_bits_valid(&self) -> bool {
         let mask = match self.header {
             Header::Short { .. } => SHORT_RESERVED_BITS,
             _ => LONG_RESERVED_BITS,
@@ -237,7 +237,7 @@ impl Packet {
 
 #[cfg_attr(test, derive(Clone))]
 #[derive(Debug)]
-pub(crate) enum Header {
+pub enum Header {
     Initial {
         dst_cid: ConnectionId,
         src_cid: ConnectionId,
@@ -271,7 +271,7 @@ pub(crate) enum Header {
 }
 
 impl Header {
-    pub(crate) fn encode(&self, w: &mut BytesMut) -> PartialEncode {
+    pub fn encode(&self, w: &mut BytesMut) -> PartialEncode {
         use self::Header::*;
         let start = w.len();
         match *self {
@@ -369,11 +369,11 @@ impl Header {
     }
 
     /// Whether the packet is encrypted on the wire
-    pub(crate) fn is_protected(&self) -> bool {
+    pub fn is_protected(&self) -> bool {
         !matches!(*self, Self::Retry { .. } | Self::VersionNegotiate { .. })
     }
 
-    pub(crate) fn number(&self) -> Option<PacketNumber> {
+    pub fn number(&self) -> Option<PacketNumber> {
         use self::Header::*;
         Some(match *self {
             Initial { number, .. } => number,
@@ -385,7 +385,7 @@ impl Header {
         })
     }
 
-    pub(crate) fn space(&self) -> SpaceId {
+    pub fn space(&self) -> SpaceId {
         use self::Header::*;
         match *self {
             Short { .. } => SpaceId::Data,
@@ -401,22 +401,22 @@ impl Header {
         }
     }
 
-    pub(crate) fn key_phase(&self) -> bool {
+    pub fn key_phase(&self) -> bool {
         match *self {
             Self::Short { key_phase, .. } => key_phase,
             _ => false,
         }
     }
 
-    pub(crate) fn is_short(&self) -> bool {
+    pub fn is_short(&self) -> bool {
         matches!(*self, Self::Short { .. })
     }
 
-    pub(crate) fn is_1rtt(&self) -> bool {
+    pub fn is_1rtt(&self) -> bool {
         self.is_short()
     }
 
-    pub(crate) fn is_0rtt(&self) -> bool {
+    pub fn is_0rtt(&self) -> bool {
         matches!(
             *self,
             Self::Long {
@@ -426,7 +426,7 @@ impl Header {
         )
     }
 
-    pub(crate) fn dst_cid(&self) -> &ConnectionId {
+    pub fn dst_cid(&self) -> &ConnectionId {
         use self::Header::*;
         match *self {
             Initial { ref dst_cid, .. } => dst_cid,
@@ -438,15 +438,15 @@ impl Header {
     }
 }
 
-pub(crate) struct PartialEncode {
-    pub(crate) start: usize,
-    pub(crate) header_len: usize,
+pub struct PartialEncode {
+    pub start: usize,
+    pub header_len: usize,
     // Packet number length, payload length needed
     pn: Option<(usize, bool)>,
 }
 
 impl PartialEncode {
-    pub(crate) fn finish(
+    pub fn finish(
         self,
         buf: &mut [u8],
         header_crypto: &dyn crypto::HeaderKey,
@@ -480,7 +480,7 @@ impl PartialEncode {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum PlainHeader {
+pub enum PlainHeader {
     Initial {
         dst_cid: ConnectionId,
         src_cid: ConnectionId,
@@ -614,7 +614,7 @@ impl PlainHeader {
 
 // An encoded packet number
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub(crate) enum PacketNumber {
+pub enum PacketNumber {
     U8(u8),
     U16(u16),
     U24(u32),
@@ -622,7 +622,7 @@ pub(crate) enum PacketNumber {
 }
 
 impl PacketNumber {
-    pub(crate) fn new(n: u64, largest_acked: u64) -> Self {
+    pub fn new(n: u64, largest_acked: u64) -> Self {
         let range = (n - largest_acked) * 2;
         if range < 1 << 8 {
             Self::U8(n as u8)
@@ -637,7 +637,7 @@ impl PacketNumber {
         }
     }
 
-    pub(crate) fn len(self) -> usize {
+    pub fn len(self) -> usize {
         use self::PacketNumber::*;
         match self {
             U8(_) => 1,
@@ -647,7 +647,7 @@ impl PacketNumber {
         }
     }
 
-    pub(crate) fn encode<W: BufMut>(self, w: &mut W) {
+    pub fn encode<W: BufMut>(self, w: &mut W) {
         use self::PacketNumber::*;
         match self {
             U8(x) => w.write(x),
@@ -657,7 +657,7 @@ impl PacketNumber {
         }
     }
 
-    pub(crate) fn decode<R: Buf>(len: usize, r: &mut R) -> Result<Self, PacketDecodeError> {
+    pub fn decode<R: Buf>(len: usize, r: &mut R) -> Result<Self, PacketDecodeError> {
         use self::PacketNumber::*;
         let pn = match len {
             1 => U8(r.get()?),
@@ -669,7 +669,7 @@ impl PacketNumber {
         Ok(pn)
     }
 
-    pub(crate) fn decode_len(tag: u8) -> usize {
+    pub fn decode_len(tag: u8) -> usize {
         1 + (tag & 0x03) as usize
     }
 
@@ -683,7 +683,7 @@ impl PacketNumber {
         }
     }
 
-    pub(crate) fn expand(self, expected: u64) -> u64 {
+    pub fn expand(self, expected: u64) -> u64 {
         // From Appendix A
         use self::PacketNumber::*;
         let truncated = match self {
@@ -717,7 +717,7 @@ impl PacketNumber {
 
 /// Long packet type including non-uniform cases
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum LongHeaderType {
+pub enum LongHeaderType {
     Initial,
     Retry,
     Standard(LongType),
@@ -751,7 +751,7 @@ impl From<LongHeaderType> for u8 {
 
 /// Long packet types with uniform header structure
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum LongType {
+pub enum LongType {
     Handshake,
     ZeroRtt,
 }
@@ -775,9 +775,9 @@ impl From<coding::UnexpectedEnd> for PacketDecodeError {
     }
 }
 
-pub(crate) const LONG_HEADER_FORM: u8 = 0x80;
-pub(crate) const FIXED_BIT: u8 = 0x40;
-pub(crate) const SPIN_BIT: u8 = 0x20;
+pub const LONG_HEADER_FORM: u8 = 0x80;
+pub const FIXED_BIT: u8 = 0x40;
+pub const SPIN_BIT: u8 = 0x20;
 const SHORT_RESERVED_BITS: u8 = 0x18;
 const LONG_RESERVED_BITS: u8 = 0x0c;
 const KEY_PHASE_BIT: u8 = 0x04;
