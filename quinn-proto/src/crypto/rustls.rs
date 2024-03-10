@@ -331,7 +331,8 @@ fn to_vec(params: &TransportParameters) -> Vec<u8> {
     bytes
 }
 
-pub(crate) fn initial_keys(version: Version, dst_cid: &ConnectionId, side: Side) -> Keys {
+/// Derive keys used for initial packet.
+pub fn initial_keys(version: Version, dst_cid: &ConnectionId, side: Side) -> Keys {
     let keys = rustls::quic::Keys::initial(version, dst_cid, side.into());
     Keys {
         header: KeyPair {
