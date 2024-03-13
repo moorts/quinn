@@ -512,7 +512,7 @@ pub enum PlainHeader {
 }
 
 impl PlainHeader {
-    fn dst_cid(&self) -> &ConnectionId {
+    pub fn dst_cid(&self) -> &ConnectionId {
         use self::PlainHeader::*;
         match self {
             Initial { dst_cid, .. } => dst_cid,
@@ -523,7 +523,7 @@ impl PlainHeader {
         }
     }
 
-    fn payload_len(&self) -> Option<u64> {
+    pub fn payload_len(&self) -> Option<u64> {
         use self::PlainHeader::*;
         match self {
             Initial { len, .. } | Long { len, .. } => Some(*len),
@@ -531,7 +531,7 @@ impl PlainHeader {
         }
     }
 
-    fn decode(
+    pub fn decode(
         buf: &mut io::Cursor<BytesMut>,
         local_cid_len: usize,
         supported_versions: &[u32],
