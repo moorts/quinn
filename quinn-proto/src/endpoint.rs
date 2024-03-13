@@ -324,9 +324,11 @@ impl Endpoint {
         if remote.port() == 0 || remote.ip().is_unspecified() {
             return Err(ConnectError::InvalidRemoteAddress(remote));
         }
+        /*
         if !self.config.supported_versions.contains(&config.version) {
             return Err(ConnectError::UnsupportedVersion);
         }
+        */
 
         let remote_id = RandomConnectionIdGenerator::new(MAX_CID_SIZE).generate_cid();
 
