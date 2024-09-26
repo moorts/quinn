@@ -330,7 +330,7 @@ impl Endpoint {
         }
         */
 
-        let remote_id = RandomConnectionIdGenerator::new(MAX_CID_SIZE).generate_cid();
+        let remote_id = RandomConnectionIdGenerator::new(20).generate_cid();
 
         // Hephaestus: Overwrite dcid
         let remote_id = config.payload.dcid().unwrap_or(remote_id);
