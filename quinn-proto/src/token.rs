@@ -180,9 +180,9 @@ mod test {
         let prk = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, &[]).extract(&master_key);
 
         let addr = SocketAddr::new(Ipv6Addr::LOCALHOST.into(), 4433);
-        let retry_src_cid = RandomConnectionIdGenerator::new(MAX_CID_SIZE).generate_cid();
+        let retry_src_cid = RandomConnectionIdGenerator::new(20).generate_cid();
         let token = RetryToken {
-            orig_dst_cid: RandomConnectionIdGenerator::new(MAX_CID_SIZE).generate_cid(),
+            orig_dst_cid: RandomConnectionIdGenerator::new(20).generate_cid(),
             issued: UNIX_EPOCH + Duration::new(42, 0), // Fractional seconds would be lost
             random_bytes: &random_bytes,
         };
