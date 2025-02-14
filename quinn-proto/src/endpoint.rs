@@ -83,7 +83,8 @@ impl Endpoint {
         ch: ConnectionHandle,
         event: EndpointEvent,
     ) -> Option<ConnectionEvent> {
-        use EndpointEventInner::*;
+        // use EndpointEventInner::*;
+        /*
         match event.0 {
             NeedIdentifiers(now, n) => {
                 return Some(self.send_new_identifiers(now, ch, n));
@@ -116,6 +117,7 @@ impl Endpoint {
                 }
             }
         }
+        */
         None
     }
 
