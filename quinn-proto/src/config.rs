@@ -894,10 +894,12 @@ impl PayloadConfig {
 
 /// Hephaestus: Accessors
 impl PayloadConfig {
+    /// Get scid if Some.
     pub fn scid(&self) -> Option<ConnectionId> {
         self.scid
     }
 
+    /// Get dcid if Some.
     pub fn dcid(&self) -> Option<ConnectionId> {
         self.dcid
     }

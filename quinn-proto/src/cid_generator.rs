@@ -57,6 +57,26 @@ impl RandomConnectionIdGenerator {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct StaticConnectionIdGenerator {
+    cid: ConnectionId,
+}
+
+impl ConnectionIdGenerator for StaticConnectionIdGenerator {
+    fn generate_cid(&mut self) -> ConnectionId {
+        self.cid.clone()
+    }
+
+    /// Provide the length of dst_cid in short header packet
+    fn cid_len(&self) -> usize {
+        self.cid.len()
+    }
+
+    fn cid_lifetime(&self) -> Option<Duration> {
+        None
+    }
+}
+
 impl ConnectionIdGenerator for RandomConnectionIdGenerator {
     fn generate_cid(&mut self) -> ConnectionId {
         let mut bytes_arr = [0; MAX_CID_SIZE];
